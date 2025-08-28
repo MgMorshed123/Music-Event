@@ -10,9 +10,7 @@ import api from "../services/api";
 import { useAppContext } from "../App";
 import { fetchEvents } from "../pages/fetch";
 
-const stripePromise = loadStripe(
-  "pk_test_51MI1d2B9pVuzZ7tZnHg41lQHmrgtra5XGW6ecvwMk4Soco32wjtK5LvGhZYIRDI6nuU57gSkjlr8S9gzo36CVLuJ00VCpwwRhM"
-);
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_KEY);
 
 const CheckoutForm = ({
   event,
