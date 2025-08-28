@@ -8,7 +8,6 @@ import {
 } from "@stripe/react-stripe-js";
 import api from "../services/api";
 import { useAppContext } from "../App";
-import { fetchEvents } from "../pages/fetch";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_KEY);
 
@@ -30,49 +29,80 @@ const CheckoutForm = ({
       alert("Please log in to purchase tickets");
       return;
     }
+
+    if (!stripe || !elements) {
+      setError("Stripe has not loaded yet. Please try again.");
+      return;
+    }
+
+    const cardElement = elements.getElement(CardElement);
+    if (!cardElement) {
+      setError("Payment form not ready. Please refresh and try again.");
+      return;
+    }
+
     setLoading(true);
 
     try {
+      // 1. Create a payment intent on backend
       const { data } = await api.post("/tickets/create-payment-intent", {
         eventId: event._id,
         quantity,
       });
 
+      // 2. Confirm payment with card element
       const result = await stripe.confirmCardPayment(data.clientSecret, {
-        payment_method: { card: elements.getElement(CardElement) },
+        payment_method: { card: cardElement },
       });
 
       if (result.error) {
         setError(result.error.message);
-      }
-      if (result.paymentIntent.status === "succeeded") {
+      } else if (result.paymentIntent.status === "succeeded") {
+        // 3. Confirm purchase on backend
         await api.post("/tickets/confirm", {
           eventId: event._id,
           quantity,
           paymentId: result.paymentIntent.id,
         });
-        await handleTicketPurchase(); // ✅ now refreshes events
+        await handleTicketPurchase();
         setSelectedEvent(null);
       }
     } catch (err) {
-      setError("Payment failed");
+      console.error(err);
+      setError("Payment failed. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="space-y-4">
-      <CardElement className="bg-gray-700 p-4 rounded-md text-white" />
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <CardElement
+        options={{
+          style: {
+            base: {
+              color: "#fff",
+              fontSize: "16px",
+              "::placeholder": { color: "#aab7c4" },
+            },
+            invalid: {
+              color: "#f44336",
+            },
+          },
+        }}
+        className="p-4 bg-gray-700 rounded-md"
+      />
+
       {error && <p className="text-red-500">{error}</p>}
+
       <button
-        type="button"
-        onClick={handleSubmit}
-        disabled={loading}
+        type="submit"
+        disabled={loading || !stripe}
         className="bg-neon-blue text-white px-6 py-3 rounded-full hover:bg-neon-blue/80"
       >
         {loading ? "Processing..." : `Pay $${event.ticketPrice * quantity}`}
       </button>
+
       <button
         type="button"
         onClick={() => setSelectedEvent(null)}
@@ -80,7 +110,7 @@ const CheckoutForm = ({
       >
         Cancel
       </button>
-    </div>
+    </form>
   );
 };
 
@@ -113,6 +143,7 @@ const TicketModalWithStripe = ({
             className="bg-gray-700 text-white p-2 rounded-md w-full"
           />
         </div>
+
         <Elements stripe={stripePromise}>
           <CheckoutForm
             event={selectedEvent}
