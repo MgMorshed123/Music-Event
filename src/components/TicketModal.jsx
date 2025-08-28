@@ -9,7 +9,8 @@ import {
 import api from "../services/api";
 import { useAppContext } from "../App";
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_KEY);
+console.log("Stripe Key:", import.meta.env.VITE_STRIPE_KEY);
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_KEY);
 
 console.log(stripePromise);
 
@@ -21,6 +22,7 @@ const CheckoutForm = ({
 }) => {
   const stripe = useStripe();
   const elements = useElements();
+  console.log(elements);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const { user } = useAppContext();
@@ -38,6 +40,7 @@ const CheckoutForm = ({
     }
 
     const cardElement = elements.getElement(CardElement);
+    console.log(cardElement);
     if (!cardElement) {
       setError("Payment form not ready. Please refresh and try again.");
       return;
