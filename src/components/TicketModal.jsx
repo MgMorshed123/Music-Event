@@ -11,6 +11,8 @@ import { useAppContext } from "../App";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_KEY);
 
+console.log(stripePromise);
+
 const CheckoutForm = ({
   event,
   quantity,
