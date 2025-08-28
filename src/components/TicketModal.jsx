@@ -22,7 +22,7 @@ const CheckoutForm = ({
 }) => {
   const stripe = useStripe();
   const elements = useElements();
-  console.log(elements);
+  console.log("elements", elements);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const { user } = useAppContext();
@@ -40,7 +40,8 @@ const CheckoutForm = ({
     }
 
     const cardElement = elements.getElement(CardElement);
-    console.log(cardElement);
+    console.log("cardElement", cardElement);
+
     if (!cardElement) {
       setError("Payment form not ready. Please refresh and try again.");
       return;
